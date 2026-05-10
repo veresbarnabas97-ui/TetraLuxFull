@@ -41,11 +41,3 @@ Válaszolj a megérzéseid alapján, túl sokat ne gondolkozz rajta!
 
 +1. Ha a lelkednek lenne egy saját dallama, az milyen tempójú vagy hangulatú lenne?
 Válasz:
-
-============================================================
-ELEMZÉSI SABLON (Az AI / értékelő számára)
-• Ha az (A) válaszok dominálnak: Vörös / Narancs aura (Dinamikus, energikus, cselekvő, szenvedélyes személyiség).
-• Ha a (B) válaszok dominálnak: Kék / Indigó aura (Gyógyító, empatikus, intuitív, békére törekvő személyiség).
-• Ha a (C) válaszok dominálnak: Zöld / Sárga aura (Gyakorlatias, stabil, természetközeli, növekedésre és harmóniára törekvő).
-• Ha a (D) válaszok dominálnak: Lila / Fehér aura (Szellemi, vizionárius, független, elemző és magas tudatosságú).
-• A +1 kérdés árnyalja az aura alapvető "rezgését" (pl. melankolikus kék, pörgős vörös).
