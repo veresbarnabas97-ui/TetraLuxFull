@@ -124,6 +124,22 @@
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--neon-color); }
+
+        /* Kvíz opció gombok */
+        .quiz-option {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .quiz-option:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--neon-color);
+        }
+        .quiz-option.selected {
+            background-color: var(--neon-glow);
+            border-color: var(--neon-color);
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4 antialiased selection:bg-[var(--neon-color)] selection:text-white">
@@ -214,12 +230,12 @@
                 </h3>
                 
                 <button onclick="startQuiz('szemelyiseg')" class="btn-neon w-full py-4 px-6 rounded-xl text-left font-semibold flex justify-between items-center group/btn">
-                    <span data-i18n="test1">1. Személyiség megállapítása (24)</span>
+                    <span data-i18n="test1">1. Személyiség megállapítása (7)</span>
                     <svg class="w-5 h-5 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
 
                 <button onclick="startQuiz('kedvencek')" class="btn-neon w-full py-4 px-6 rounded-xl text-left font-semibold flex justify-between items-center group/btn">
-                    <span data-i18n="test2">2. Kedvencek (11)</span>
+                    <span data-i18n="test2">2. Kedvencek (7)</span>
                     <svg class="w-5 h-5 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
 
@@ -233,7 +249,7 @@
             <div class="flex flex-col gap-6">
                 <div class="glass-panel p-8 flex flex-col justify-center items-center gap-4 relative overflow-hidden h-full border border-gray-800 opacity-80">
                     <div class="w-16 h-16 rounded-2xl bg-blue-500 bg-opacity-10 flex items-center justify-center text-blue-500 mb-2">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     </div>
                     <h3 class="text-2xl font-extrabold text-center text-white" data-i18n="knowledge">Barnabás Tudástár</h3>
                     <p class="text-sm text-gray-400 text-center">Binance, MetaMask, BNB Chain, DEX vs CEX</p>
@@ -272,6 +288,13 @@
             <div id="quiz-content">
                 <p id="q-count" class="text-xs text-[var(--neon-color)] font-bold uppercase tracking-widest mb-2">Kérdés 1</p>
                 <h3 id="q-text" class="text-xl md:text-2xl font-semibold mb-6 leading-relaxed">...</h3>
+                
+                <!-- Válaszlehetőségek gombjai (feleletválasztós kérdésnél) -->
+                <div id="q-options" class="hidden flex-col gap-3 mb-4">
+                    <!-- Gombok ide kerülnek dinamikusan -->
+                </div>
+
+                <!-- Szabad szöveges válasz (+1 kérdéshez vagy ha nincs opció) -->
                 <textarea id="q-input" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl p-5 text-white min-h-[160px] text-lg focus:border-[var(--neon-color)] transition-all shadow-inner resize-y placeholder-gray-600" data-i18n="placeholder" placeholder="Írd le ide a gondolataidat..."></textarea>
             </div>
 
@@ -370,6 +393,7 @@
     <!-- JavaScript Logika -->
     <script>
         // -- Környezeti változók a Gemini API-hoz --
+        // FONTOS: Ide be kell tenni a Google Gemini API kulcsot, különben az AI nem fog működni!
         const apiKey = ""; 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -381,8 +405,8 @@
                 menuTitle: "Főmenü", menuDesc: "Válaszd ki, mivel szeretnéd kezdeni az utazást.",
                 connectWallet: "Tárca Csatlakoztatása", buyTLX: "TetraLux Pool",
                 aiFortuneBtn: "Napi AI Útravaló Generálása", aiAnalyzing: "Az AI épp a csillagokat elemzi neked...",
-                testSection: "Önismereti Tesztek", test1: "1. Személyiség megállapítása (24)",
-                test2: "2. Kedvencek (11)", test3: "3. Aura színe (7)",
+                testSection: "Önismereti Tesztek", test1: "1. Személyiség megállapítása (7)",
+                test2: "2. Kedvencek (7)", test3: "3. Aura színe (7)",
                 knowledge: "Barnabás Tudástár", locked: "Zárolva. Szükséges: 10,000 TLX",
                 buyBNB: "BNB Vásárlása", buyBNBDesc: "Kripto vásárlás bankkártyával",
                 placeholder: "Írd le ide a gondolataidat...", questionStr: "Kérdés",
@@ -392,7 +416,7 @@
                 contractAddress: "Okosszerződés (CA):", payAmount: "Fizetendő (BNB)", receiveAmount: "Kapott mennyiség (TLX)",
                 buyExecute: "Vásárlás Végrehajtása", copiedCA: "CA a vágólapra másolva!",
                 alertWallet: "Kérlek először csatlakoztasd a tárcádat!",
-                alertMinBNB: "Minimum vásárlás: 0.01 BNB",
+                alertMinBNB: "Minimum vásárlás: 0.01 BNB", alertNoApi: "Nincs beállítva AI kulcs! Kérlek, próbáld újra később.",
                 txWait: "Kérlek erősítsd meg a tranzakciót...", txSuccess: "Sikeres Vásárlás! ✓", txError: "Tranzakció elutasítva.",
                 copiedResult: "A válaszaidat és az elemzést kimásoltuk a vágólapra! Megnyitjuk a Telegramot.",
                 tgMessagePrompt: "Szia Barnabás! Elkészült az AI-val támogatott önismereti tesztem. (A szöveget a vágólapról illeszd be ide!)",
@@ -404,8 +428,8 @@
                 menuTitle: "Main Menu", menuDesc: "Choose how you want to start your journey.",
                 connectWallet: "Connect Wallet", buyTLX: "TetraLux Pool",
                 aiFortuneBtn: "Generate Daily AI Fortune", aiAnalyzing: "AI is analyzing the stars for you...",
-                testSection: "Self-Discovery Tests", test1: "1. Personality Test (24)",
-                test2: "2. Favorites (11)", test3: "3. Aura Color (7)",
+                testSection: "Self-Discovery Tests", test1: "1. Personality Test (7)",
+                test2: "2. Favorites (7)", test3: "3. Aura Color (7)",
                 knowledge: "Barnabás Knowledge Base", locked: "Locked. Required: 10,000 TLX",
                 buyBNB: "Buy BNB", buyBNBDesc: "Buy crypto with credit card",
                 placeholder: "Write your thoughts here...", questionStr: "Question",
@@ -415,7 +439,7 @@
                 contractAddress: "Smart Contract (CA):", payAmount: "You Pay (BNB)", receiveAmount: "You Receive (TLX)",
                 buyExecute: "Execute Purchase", copiedCA: "CA copied to clipboard!",
                 alertWallet: "Please connect your wallet first!",
-                alertMinBNB: "Minimum purchase: 0.01 BNB",
+                alertMinBNB: "Minimum purchase: 0.01 BNB", alertNoApi: "AI key missing! Please try again later.",
                 txWait: "Please confirm the transaction...", txSuccess: "Purchase Successful! ✓", txError: "Transaction rejected.",
                 copiedResult: "Results and AI analysis copied to clipboard! Opening Telegram.",
                 tgMessagePrompt: "Hi Barnabás! I finished my AI-assisted self-discovery test. (Paste the text from your clipboard here!)",
@@ -427,8 +451,8 @@
                 menuTitle: "Pangunahing Menu", menuDesc: "Piliin kung paano mo gustong simulan ang iyong paglalakbay.",
                 connectWallet: "Ikonekta ang Wallet", buyTLX: "TetraLux Pool",
                 aiFortuneBtn: "Bumuo ng Pang-araw-araw na AI Mensahe", aiAnalyzing: "Sinisiyasat ng AI ang mga bituin para sa iyo...",
-                testSection: "Mga Pagsusuri sa Sarili", test1: "1. Pagsusuri sa Personalidad (24)",
-                test2: "2. Mga Paborito (11)", test3: "3. Kulay ng Aura (7)",
+                testSection: "Mga Pagsusuri sa Sarili", test1: "1. Pagsusuri sa Personalidad (7)",
+                test2: "2. Mga Paborito (7)", test3: "3. Kulay ng Aura (7)",
                 knowledge: "Kaalaman ni Barnabás", locked: "Naka-lock. Kinakailangan: 10,000 TLX",
                 buyBNB: "Bumili ng BNB", buyBNBDesc: "Bumili ng crypto gamit ang credit card",
                 placeholder: "Isulat ang iyong mga iniisip dito...", questionStr: "Tanong",
@@ -438,7 +462,7 @@
                 contractAddress: "Smart Contract (CA):", payAmount: "Iyong Babayaran (BNB)", receiveAmount: "Iyong Matatanggap (TLX)",
                 buyExecute: "Isagawa ang Pagbili", copiedCA: "Kinopya ang CA sa clipboard!",
                 alertWallet: "Mangyaring ikonekta muna ang iyong wallet!",
-                alertMinBNB: "Pinakamababang pagbili: 0.01 BNB",
+                alertMinBNB: "Pinakamababang pagbili: 0.01 BNB", alertNoApi: "Nawawala ang AI key! Subukan muli mamaya.",
                 txWait: "Mangyaring kumpirmahin ang transaksyon...", txSuccess: "Matagumpay ang Pagbili! ✓", txError: "Tinanggihan ang transaksyon.",
                 copiedResult: "Kinopya sa clipboard ang mga resulta at pagsusuri ng AI! Binubuksan ang Telegram.",
                 tgMessagePrompt: "Kamusta Barnabás! Natapos ko na ang aking pagsusuri sa sarili na tinulungan ng AI. (I-paste ang teksto mula sa clipboard dito!)",
@@ -449,156 +473,93 @@
         // Helper string lekéréshez
         const t = (key) => i18n[currentLang][key] || key;
 
-        // -- KÉRDÉS ADATBÁZIS (HU, EN, TL) --
+        // -- KÉRDÉS ADATBÁZIS (ÚJ 6+1-es struktúra opciókkal) --
         const questionsDb = {
             hu: {
                 szemelyiseg: [
-                    "Mi az a belső tulajdonságod, amire a legbüszkébb vagy, és mi az, amit legszívesebben megváltoztatnál magadban?",
-                    "Inkább a fejedben élsz (túlgondolod a dolgokat), vagy hagyod, hogy az események magukkal sodorjanak?",
-                    "Hogyan viselkedsz, amikor teljesen egyedül vagy, és senki sem lát? (Mi a legtermészetesebb éned?)",
-                    "Mi az a dolog, amit a legtöbben elsőre félreértenek veled kapcsolatban?",
-                    "Mennyire vagy kibékülve a múltaddal? (Lezártad a nehézségeket, vagy még rágódsz rajtuk?)",
-                    "Ha a jelenlegi lelkiállapotod egy időjárás lenne, milyen lenne az?",
-                    "Mi az a napi apró rituálé vagy szokás, ami nélkül teljesen szétesne a napod?",
-                    "Katonás rend vesz körül a mindennapjaidban, vagy inkább a „kreatív káoszban” hiszel?",
-                    "Hogyan reagálsz, ha valami nem a terveid szerint alakul? (Düh, csalódottság, vagy azonnali újratervezés?)",
-                    "Mi a legfőbb, bevált módszered a stressz és a feszültség levezetésére?",
-                    "Ha választhatnál: egy extra óra alvás minden nap, vagy egy extra szabadóra, amikor bármit megtehetsz büntetlenül?",
-                    "Mennyire vagy hajlamos elhalasztani a nehéz vagy kellemetlen feladatokat?",
-                    "Mi az az egyetlen bűn (vörös zászló), ami miatt egy pillanat alatt képes vagy bárkit kizárni az életedből?",
-                    "Könnyen adsz második esélyt, vagy ha valaki egyszer eljátszotta a bizalmadat, annak végleg lőttek?",
-                    "Inkább csendes megfigyelő vagy a társaságban, vagy te vagy az, aki pörgeti a hangulatot?",
-                    "Hogyan mutatod ki a leginkább a szeretetedet a hozzád legközelebb állóknak? (Szavak, tettek, apró figyelmességek, vagy érintés?)",
-                    "Hány olyan ember van most az életedben, akit szó szerint hajnali 3-kor is felhívhatnál, ha nagy bajban lennél?",
-                    "Mennyire érdekel valójában, hogy mit gondolnak rólad mások? (Skálázd be 1-től 10-ig!)",
-                    "Egy igazán nehéz döntéshelyzetben a hideg ész (logika) vagy a belső megérzés (szív) dönt nálad?",
-                    "Szerinted az emberek alapvetően jó szándékúak, vagy mindenkinek megvan a maga önző hátsó szándéka?",
-                    "Ha találnál az utcán egy pénztárcát tele készpénzzel, de iratok nélkül, mit tennél vele teljesen őszintén?",
-                    "Mi a legnagyobb egzisztenciális félelmed vagy aggodalmad a jövőddel kapcsolatban?",
-                    "Mi az a fő cél, álom vagy hajtóerő, ami miatt érdemes minden reggel felkelned?",
-                    "Ha kapnál egy lezárt borítékot, amiben benne van az életed hátralévő forgatókönyve a halálod idejével együtt, kinyitnád? (Miért?)"
+                    { q: "1. Hogyan töltődsz fel leginkább egy nehéz nap után?", options: ["(A) Egyedül, egy könyvvel vagy filmmel.", "(B) Barátokkal, társaságban vagy nyüzsgő helyen."] },
+                    { q: "2. Mi alapján hozod meg a legfontosabb döntéseidet?", options: ["(A) Logika és józan ész.", "(B) Érzések és megérzések."] },
+                    { q: "3. Mennyire szeretsz előre tervezni?", options: ["(A) Precíz tervem van mindenre, nem szeretem a meglepetéseket.", "(B) Inkább spontán vagyok, szeretem az improvizációt."] },
+                    { q: "4. Hogyan reagálsz a váratlan, stresszes helyzetekre?", options: ["(A) Leblokkolok vagy feszült leszek, idő kell a reagáláshoz.", "(B) Gyorsan alkalmazkodom és azonnal megoldást keresek."] },
+                    { q: "5. Mi az, amit a leginkább értékelsz egy emberben?", options: ["(A) A megbízhatóságot és az egyenességet.", "(B) A humort és az empátiát."] },
+                    { q: "6. Milyen környezetben tudsz a leghatékonyabban dolgozni vagy alkotni?", options: ["(A) Csendes, tiszta és rendezett helyen.", "(B) Kreatív káoszban, zene mellett vagy inspiráló közegben."] },
+                    { q: "+1. Ha egyetlen szóval kellene jellemezned a jelenlegi életfilozófiádat, mi lenne az?", options: null }
                 ],
                 kedvencek: [
-                    "Kedvenc film, sorozat vagy karakter:",
-                    "Kedvenc zene, előadó vagy műfaj:",
-                    "Kedvenc étel és ital:",
-                    "Kedvenc hely a világon:",
-                    "Kedvenc évszak és napszak:",
-                    "Kedvenc szín (És milyen hangulatot társítasz hozzá?):",
-                    "Kedvenc könyv, blog vagy idézet:",
-                    "Kedvenc időtöltés/hobbi, amikor teljesen egyedül vagy:",
-                    "Kedvenc gyerekkori emlék vagy tárgy:",
-                    "Kedvenc ruhadarab vagy kiegészítő:",
-                    "Mi a horoszkópod? (Aszcendenssel együtt, ha tudod):"
+                    { q: "1. Mi a kedvenc ételed, amiből bármennyit meg tudnál enni?", options: null },
+                    { q: "2. Melyik a kedvenc évszakod és miért?", options: null },
+                    { q: "3. Mi a kedvenc könyved, filmed vagy sorozatod, amit bárkinek ajánlanál?", options: null },
+                    { q: "4. Milyen stílusú zenét vagy előadót hallgatsz a legszívesebben, ha jó kedvre akarsz derülni?", options: null },
+                    { q: "5. Mi az a hobbi vagy tevékenység, ami mellett teljesen elfelejted az idő múlását?", options: null },
+                    { q: "6. Ha bárhová elutazhatnál a világon (ingyen és azonnal), mi lenne az úti célod?", options: null },
+                    { q: "+1. Mi az a tárgy az otthonodban, amit egy tűzvész esetén legelőször kimentenél?", options: null }
                 ],
                 aura: [
-                    "Egy hosszú, kimerítő hét után mi az a tevékenység, ami a leginkább feltölti önt energiával?",
-                    "Hogyan reagál a leggyakrabban egy váratlan problémára vagy éles konfliktusra?",
-                    "Ha a legközelebbi barátait megkérdeznénk, melyik 2-3 szóval jellemeznék önt a leggyakrabban?",
-                    "Amikor egy nagyon fontos, sorsfordító kérdésben kell döntenie, mi a legmeghatározóbb az ön számára?",
-                    "Milyen fizikai környezetben érzi magát a leginkább felszabadultnak és békésnek?",
-                    "Milyen tevékenység közben érzi azt, hogy megszűnik az idő, és teljesen feloldódik abban, amit csinál?",
-                    "Ha egyetlen dolgot választhatna legfőbb életcéljának, mi lenne az?"
+                    { q: "1. Melyik természeti elem energiája áll hozzád a legközelebb?", options: ["(A) Tűz (Szenvedély, erő, mozgás)", "(B) Víz (Áramlás, érzelmek, gyógyítás)", "(C) Föld (Stabilitás, természet, nyugalom)", "(D) Levegő (Intellektus, szabadság, kommunikáció)"] },
+                    { q: "2. Milyen színek vonzanak leginkább, amikor fáradt vagy és megnyugvásra vágysz?", options: ["(A) Meleg tónusok (sárga, narancs, lágy piros)", "(B) Hideg tónusok (kék, zöld, lila)", "(C) Földszínek (barna, bézs, méregzöld)", "(D) Pasztell vagy áttetsző árnyalatok"] },
+                    { q: "3. Mi a legfőbb belső motivációd az életben?", options: ["(A) Alkotni valami újat és sikereket elérni.", "(B) Segíteni másoknak és békét teremteni.", "(C) Biztonságot és stabilitást építeni magam körül.", "(D) Megérteni a világ működését és tanulni."] },
+                    { q: "4. Hogyan kezeled a konfliktusokat?", options: ["(A) Szenvedélyesen kiállok az igazamból, harcolok.", "(B) Inkább engedek a béke kedvéért, nem szeretem a feszültséget.", "(C) Higgadtan, gyakorlatiasan keresem a kompromisszumot.", "(D) Logikus érvekkel vitatkozom, távolságtartóan."] },
+                    { q: "5. Mennyire bízol az első megérzéseidben (az intuíciódban)?", options: ["(A) Nagyon, szinte mindig az első megérzésem a helyes.", "(B) Erős megérzéseim vannak, de gyakran felülbírálom őket.", "(C) Inkább a kézzelfogható tényekben és a tapasztalatomban bízom.", "(D) Elemezni szoktam a helyzeteket, az intuíció másodlagos."] },
+                    { q: "6. Mit szeretnél, hogy az emberek leginkább érezzenek a jelenlétedben?", options: ["(A) Inspirációt és energiát.", "(B) Nyugalmat, biztonságot és elfogadást.", "(C) Hitelességet és határozottságot.", "(D) Intellektuális izgalmat és nyitottságot."] },
+                    { q: "+1. Ha a lelkednek lenne egy saját dallama, az milyen tempójú vagy hangulatú lenne?", options: null }
                 ]
             },
             en: {
                 szemelyiseg: [
-                    "What internal trait are you most proud of, and what would you most like to change about yourself?",
-                    "Do you live more in your head (overthinking things), or do you let events sweep you along?",
-                    "How do you behave when you are completely alone and no one sees you? (What is your most natural self?)",
-                    "What is the one thing most people misunderstand about you at first?",
-                    "How at peace are you with your past? (Have you closed the difficulties, or do you still ruminate on them?)",
-                    "If your current state of mind were a weather condition, what would it be?",
-                    "What small daily ritual or habit would make your day fall apart without it?",
-                    "Are you surrounded by strict order, or do you believe in 'creative chaos'?",
-                    "How do you react when something doesn't go according to plan? (Anger, disappointment, or immediate replanning?)",
-                    "What is your main, proven method for relieving stress and tension?",
-                    "If you had to choose: an extra hour of sleep every day, or an extra hour of free time?",
-                    "How prone are you to procrastinate on difficult or unpleasant tasks?",
-                    "What is the one unforgivable sin (red flag) that makes you cut someone out of your life?",
-                    "Do you easily give second chances, or are they gone for good if trust is broken?",
-                    "Are you more of a quiet observer in a group, or are you the one who hypes up the mood?",
-                    "How do you show your love the most to those closest to you?",
-                    "How many people could you literally call at 3 AM if you were in big trouble?",
-                    "How much do you really care about what others think of you? (Scale 1-10)",
-                    "In a truly difficult decision, does cold reason (logic) or inner feeling (heart) decide for you?",
-                    "Do you think people are fundamentally good, or does everyone have selfish motives?",
-                    "If you found a wallet full of cash but no ID, what would you honestly do with it?",
-                    "What is your biggest existential fear or worry about your future?",
-                    "What is the main goal or driving force that makes it worth getting up every morning?",
-                    "If you received a sealed envelope with your life's script and time of death, would you open it? (Why?)"
+                    { q: "1. How do you recharge most after a hard day?", options: ["(A) Alone, with a book or movie.", "(B) With friends, in company or a busy place."] },
+                    { q: "2. How do you make your most important decisions?", options: ["(A) Logic and common sense.", "(B) Feelings and intuition."] },
+                    { q: "3. How much do you like to plan ahead?", options: ["(A) I have a precise plan for everything, no surprises.", "(B) I am rather spontaneous, I love improvisation."] },
+                    { q: "4. How do you react to unexpected, stressful situations?", options: ["(A) I freeze or get tense, I need time to react.", "(B) I adapt quickly and look for a solution immediately."] },
+                    { q: "5. What do you appreciate most in a person?", options: ["(A) Reliability and straightforwardness.", "(B) Humor and empathy."] },
+                    { q: "6. In what environment can you work or create most effectively?", options: ["(A) In a quiet, clean, and tidy place.", "(B) In creative chaos, with music or an inspiring environment."] },
+                    { q: "+1. If you had to describe your current life philosophy in a single word, what would it be?", options: null }
                 ],
                 kedvencek: [
-                    "Favorite movie, series, or character:",
-                    "Favorite music, artist, or genre:",
-                    "Favorite food and drink:",
-                    "Favorite place in the world:",
-                    "Favorite season and time of day:",
-                    "Favorite color (And what mood do you associate with it?):",
-                    "Favorite book, blog, or quote:",
-                    "Favorite pastime/hobby when completely alone:",
-                    "Favorite childhood memory or object:",
-                    "Favorite clothing or accessory:",
-                    "What is your zodiac sign? (With ascendant, if you know it):"
+                    { q: "1. What is your favorite food that you could eat endless amounts of?", options: null },
+                    { q: "2. What is your favorite season and why?", options: null },
+                    { q: "3. What is your favorite book, movie, or series you'd recommend to anyone?", options: null },
+                    { q: "4. What style of music or artist do you listen to to cheer up?", options: null },
+                    { q: "5. What hobby or activity makes you completely forget about time?", options: null },
+                    { q: "6. If you could travel anywhere in the world (free and instantly), where would you go?", options: null },
+                    { q: "+1. What object in your home would you save first in a fire?", options: null }
                 ],
                 aura: [
-                    "After a long, exhausting week, what activity recharges your energy the most?",
-                    "How do you most often react to an unexpected problem or sharp conflict?",
-                    "If your closest friends were asked, what 2-3 words would they use to describe you?",
-                    "When making a life-changing decision, what is most decisive for you?",
-                    "In what physical environment do you feel most liberated and peaceful?",
-                    "During what activity do you feel that time ceases to exist?",
-                    "If you could choose one thing as your main life goal, what would it be?"
+                    { q: "1. Which natural element's energy is closest to you?", options: ["(A) Fire (Passion, power, movement)", "(B) Water (Flow, emotions, healing)", "(C) Earth (Stability, nature, calm)", "(D) Air (Intellect, freedom, communication)"] },
+                    { q: "2. What colors attract you most when you are tired and want to calm down?", options: ["(A) Warm tones (yellow, orange, soft red)", "(B) Cool tones (blue, green, purple)", "(C) Earth tones (brown, beige, dark green)", "(D) Pastel or translucent shades"] },
+                    { q: "3. What is your main internal motivation in life?", options: ["(A) To create something new and achieve success.", "(B) To help others and create peace.", "(C) To build security and stability around me.", "(D) To understand how the world works and learn."] },
+                    { q: "4. How do you handle conflicts?", options: ["(A) I passionately stand up for my truth, I fight if needed.", "(B) I rather yield for the sake of peace, I dislike tension.", "(C) I calmly and practically look for a compromise.", "(D) I argue with logical points, keeping a distance."] },
+                    { q: "5. How much do you trust your first feelings (intuition)?", options: ["(A) Very much, my first feeling is almost always right.", "(B) I have strong intuitions, but I often overrule them.", "(C) I rely more on tangible facts and my experience.", "(D) I tend to analyze situations, intuition is secondary."] },
+                    { q: "6. What do you want people to feel most in your presence?", options: ["(A) Inspiration and energy.", "(B) Calm, security, and acceptance.", "(C) Authenticity and decisiveness.", "(D) Intellectual excitement and openness."] },
+                    { q: "+1. If your soul had its own melody, what tempo or mood would it have?", options: null }
                 ]
             },
             tl: {
                 szemelyiseg: [
-                    "Anong panloob na katangian ang pinaka-ipinagmamalaki mo, at ano ang gusto mong baguhin sa iyong sarili?",
-                    "Nabubuhay ka ba nang labis sa iyong isipan (overthinking), o hinahayaan mong dalhin ka ng mga pangyayari?",
-                    "Paano ka kumilos kapag nag-iisa ka at walang nakakakita sa iyo?",
-                    "Ano ang isang bagay na madalas hindi naiintindihan ng karamihan tungkol sa iyo sa una?",
-                    "Gaano ka kapayapa sa iyong nakaraan?",
-                    "Kung ang iyong kasalukuyang kalagayan ng isip ay isang lagay ng panahon, ano ito?",
-                    "Anong maliit na pang-araw-araw na ritwal ang sisira sa iyong araw kung wala ito?",
-                    "Napapaligiran ka ba ng mahigpit na kaayusan, o naniniwala ka sa 'creative chaos'?",
-                    "Paano ka tumutugon kapag may hindi nangyari ayon sa plano?",
-                    "Ano ang pangunahing paraan mo para maibsan ang stress?",
-                    "Kung papipiliin ka: dagdag na isang oras ng tulog araw-araw, o dagdag na libreng oras?",
-                    "Gaano ka kadaling ipagpaliban ang mahihirap na gawain?",
-                    "Ano ang isang malaking kasalanan (red flag) para itakwil mo ang isang tao sa iyong buhay?",
-                    "Madali ka bang magbigay ng pangalawang pagkakataon?",
-                    "Ikaw ba ay tahimik na tagamasid, o ikaw ang nagpapasaya sa grupo?",
-                    "Paano mo ipinapakita ang pagmamahal mo sa mga pinakamalapit sa iyo?",
-                    "Ilang tao ang kaya mong tawagan ng 3 AM kapag nasa matinding problema ka?",
-                    "Gaano ka talaga may pakialam sa iniisip ng iba sa iyo? (Scale 1-10)",
-                    "Sa isang mahirap na desisyon, lohika ba o puso ang nagpapasya para sa iyo?",
-                    "Sa tingin mo ba ang mga tao ay sadyang mabuti, o lahat ay may makasariling motibo?",
-                    "Kung nakakita ka ng wallet na puno ng pera ngunit walang ID, ano ang gagawin mo nang totoo?",
-                    "Ano ang pinakamalaking takot mo tungkol sa iyong hinaharap?",
-                    "Ano ang pangunahing layunin na nag-uudyok sa iyo na bumangon tuwing umaga?",
-                    "Kung nakatanggap ka ng sobre na naglalaman ng petsa ng iyong kamatayan, bubuksan mo ba ito? (Bakit?)"
+                    { q: "1. Paano ka pinaka nakakapag-recharge pagkatapos ng mahirap na araw?", options: ["(A) Mag-isa, may libro o pelikula.", "(B) Kasama ang mga kaibigan, sa mataong lugar."] },
+                    { q: "2. Paano ka gumagawa ng pinakamahalagang desisyon?", options: ["(A) Lohika at katinuan.", "(B) Damdamin at intuwisyon."] },
+                    { q: "3. Gaano mo gusto magplano nang maaga?", options: ["(A) May eksaktong plano ako sa lahat, walang sorpresa.", "(B) Spontaneous ako, gusto ko ang pag-improvise."] },
+                    { q: "4. Paano ka tumutugon sa mga hindi inaasahang, nakaka-stress na sitwasyon?", options: ["(A) Natitigilan o nai-stress, kailangan ng oras para sumagot.", "(B) Mabilis makibagay at humanap agad ng solusyon."] },
+                    { q: "5. Ano ang pinakapinapahalagahan mo sa isang tao?", options: ["(A) Pagiging maaasahan at tapat.", "(B) Katatawanan at empatiya."] },
+                    { q: "6. Sa anong kapaligiran ka pinaka-epektibong nakakapagtrabaho o nakakalikha?", options: ["(A) Sa tahimik, malinis, at maayos na lugar.", "(B) Sa malikhaing gulo, may musika o inspirasyon."] },
+                    { q: "+1. Kung ilalarawan mo ang iyong pilosopiya sa buhay sa isang salita, ano ito?", options: null }
                 ],
                 kedvencek: [
-                    "Paboritong pelikula, serye, o karakter:",
-                    "Paboritong musika, artist, o genre:",
-                    "Paboritong pagkain at inumin:",
-                    "Paboritong lugar sa mundo:",
-                    "Paboritong panahon at oras ng araw:",
-                    "Paboritong kulay (At anong damdamin ang iniuugnay mo rito?):",
-                    "Paboritong libro, blog, o quote:",
-                    "Paboritong libangan kapag nag-iisa:",
-                    "Paboritong alaala noong bata pa o bagay:",
-                    "Paboritong damit o accessory:",
-                    "Ano ang iyong zodiac sign?"
+                    { q: "1. Ano ang paborito mong pagkain na kaya mong kainin nang walang sawa?", options: null },
+                    { q: "2. Ano ang paborito mong panahon at bakit?", options: null },
+                    { q: "3. Ano ang paborito mong libro, pelikula, o serye na irerekomenda mo?", options: null },
+                    { q: "4. Anong istilo ng musika ang pinapakinggan mo para sumaya?", options: null },
+                    { q: "5. Anong libangan ang nakakapagpalimot sa iyo sa oras?", options: null },
+                    { q: "6. Kung makakapaglakbay ka kahit saan (libre at mabilis), saan ka pupunta?", options: null },
+                    { q: "+1. Anong bagay sa bahay mo ang unang ililigtas mo sa sunog?", options: null }
                 ],
                 aura: [
-                    "Matapos ang isang nakakapagod na linggo, anong aktibidad ang nagbibigay sa iyo ng lakas?",
-                    "Paano ka karaniwang tumutugon sa isang hindi inaasahang problema o matinding hidwaan?",
-                    "Kung tatanungin ang iyong matatalik na kaibigan, anong 2-3 salita ang gagamitin nila upang ilarawan ka?",
-                    "Kapag gumagawa ng isang desisyon na magbabago ng buhay, ano ang pinakamahalaga sa iyo?",
-                    "Sa anong pisikal na kapaligiran ka nakadarama ng lubos na kapayapaan?",
-                    "Sa anong aktibidad mo nararamdaman na tila tumigil ang oras?",
-                    "Kung maaari kang pumili ng isang pangunahing layunin sa buhay, ano ito?"
+                    { q: "1. Aling elemento ng kalikasan ang pinakamalapit sa iyo?", options: ["(A) Apoy (Pasyon, lakas, galaw)", "(B) Tubig (Daloy, emosyon, paggaling)", "(C) Lupa (Katatagan, kalikasan, kalmado)", "(D) Hangin (Talino, kalayaan, komunikasyon)"] },
+                    { q: "2. Anong kulay ang pinakagusto mo kapag pagod ka at gusto mong kumalma?", options: ["(A) Mainit (dilaw, orange, malambot na pula)", "(B) Malamig (asul, berde, lila)", "(C) Kulay lupa (kayumanggi, beige, madilim na berde)", "(D) Pastel o malinaw na kulay"] },
+                    { q: "3. Ano ang pangunahing motibasyon mo sa buhay?", options: ["(A) Gumawa ng bago at magtagumpay.", "(B) Tumulong sa iba at gumawa ng kapayapaan.", "(C) Bumuo ng seguridad at katatagan.", "(D) Maintindihan ang mundo at matuto."] },
+                    { q: "4. Paano mo hinaharap ang mga hidwaan?", options: ["(A) Pinaglalaban ko ang totoo, lalaban kung kailangan.", "(B) Nagpaparaya para sa kapayapaan, ayaw ko ng tensyon.", "(C) Mahinahon na naghahanap ng kompromiso.", "(D) Nakikipagtalo gamit ang lohika, may distansya."] },
+                    { q: "5. Gaano ka nagtitiwala sa una mong pakiramdam (intuwisyon)?", options: ["(A) Sobra, madalas tama ang una kong pakiramdam.", "(B) Malakas ang intuwisyon, pero madalas kong kinokontra.", "(C) Mas nagtitiwala ako sa mga katotohanan at karanasan.", "(D) Sinusuri ko ang sitwasyon, pangalawa ang intuwisyon."] },
+                    { q: "6. Ano ang gusto mong maramdaman ng mga tao sa presensya mo?", options: ["(A) Inspirasyon at lakas.", "(B) Kalmado, seguridad, at pagtanggap.", "(C) Pagiging totoo at desidido.", "(D) Intelektwal na pananabik at pagiging bukas."] },
+                    { q: "+1. Kung may sariling melodiya ang kaluluwa mo, anong tempo o mood ito?", options: null }
                 ]
             }
         };
@@ -609,6 +570,7 @@
         let currentQuizId = '';
         let currentStep = 0;
         let userAnswers = [];
+        let selectedOptionText = ''; // Segédváltozó az opciós kérdésekhez
         let lastAiAnalysis = "";
         let userWalletAddress = null;
 
@@ -642,7 +604,6 @@
                 }
             });
 
-            // Ha épp kvízben vagyunk, frissítsük a felületet
             if(!views.quiz.classList.contains('view-hidden')) updateQuizUI();
         }
 
@@ -650,7 +611,7 @@
             hideView.classList.add('view-hidden');
             hideView.classList.remove('fade-in');
             showView.classList.remove('view-hidden');
-            void showView.offsetWidth; // Trigger reflow
+            void showView.offsetWidth;
             showView.classList.add('fade-in');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -690,7 +651,6 @@
             document.getElementById('btn-next').classList.remove('hidden');
             document.getElementById('name-box').classList.add('hidden');
             document.getElementById('name-box').classList.remove('flex');
-            document.getElementById('q-input').classList.remove('hidden');
             
             updateQuizUI();
             switchView(views.menu, views.quiz);
@@ -700,10 +660,46 @@
             const qs = questionsDb[currentLang][currentQuizId];
             if(!qs) return;
 
+            const currentQData = qs[currentStep];
+            selectedOptionText = userAnswers[currentStep] || ''; // Korábbi válasz visszatöltése
+
             document.getElementById('quiz-ui-title').innerText = t('testSection') + ' - ' + currentQuizId.toUpperCase();
             document.getElementById('q-count').innerText = `${t('questionStr')} ${currentStep + 1} / ${qs.length}`;
-            document.getElementById('q-text').innerText = qs[currentStep];
-            document.getElementById('q-input').value = userAnswers[currentStep] || '';
+            document.getElementById('q-text').innerText = currentQData.q;
+            
+            const qInput = document.getElementById('q-input');
+            const qOptions = document.getElementById('q-options');
+            
+            // Töröljük a korábbi gombokat
+            qOptions.innerHTML = '';
+
+            // Ha van előre definiált opció, GOMBOKAT mutatunk
+            if (currentQData.options && currentQData.options.length > 0) {
+                qInput.classList.add('hidden');
+                qOptions.classList.remove('hidden');
+                qOptions.classList.add('flex');
+
+                currentQData.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-option w-full text-left p-4 rounded-xl font-medium text-sm md:text-base';
+                    btn.innerText = opt;
+                    if (selectedOptionText === opt) btn.classList.add('selected');
+                    
+                    btn.onclick = () => {
+                        // Kijelölés kezelése
+                        document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedOptionText = opt;
+                    };
+                    qOptions.appendChild(btn);
+                });
+            } else {
+                // Ha nincs opció (kifejtős kérdés), SZÖVEGDOBOZT mutatunk
+                qOptions.classList.add('hidden');
+                qOptions.classList.remove('flex');
+                qInput.classList.remove('hidden');
+                qInput.value = selectedOptionText;
+            }
             
             const progress = ((currentStep + 1) / qs.length) * 100;
             document.getElementById('progress-fill').style.width = `${progress}%`;
@@ -711,18 +707,22 @@
             const btnNext = document.getElementById('btn-next');
             btnNext.querySelector('span').innerText = currentStep === qs.length - 1 ? t('finish') : t('next');
             
-            // Újrakezdés gomb logikája (csak első kérdés után)
             const btnRestart = document.getElementById('btn-restart');
             if(currentStep > 0) btnRestart.classList.remove('hidden');
             else btnRestart.classList.add('hidden');
         }
 
         function handleNext() {
-            const val = document.getElementById('q-input').value.trim();
-            userAnswers[currentStep] = val; // Menti az üreset is, ha skippelni akar
-            
             const qs = questionsDb[currentLang][currentQuizId];
+            const currentQData = qs[currentStep];
 
+            // Mentjük az aktuális választ aszerint, hogy opciós vagy szöveges volt-e
+            if (currentQData.options && currentQData.options.length > 0) {
+                userAnswers[currentStep] = selectedOptionText;
+            } else {
+                userAnswers[currentStep] = document.getElementById('q-input').value.trim();
+            }
+            
             if (currentStep < qs.length - 1) {
                 currentStep++;
                 updateQuizUI();
@@ -736,6 +736,7 @@
             document.getElementById('q-count').innerText = t('quizDoneSub');
             
             document.getElementById('q-input').classList.add('hidden');
+            document.getElementById('q-options').classList.add('hidden');
             document.getElementById('btn-next').classList.add('hidden');
             document.getElementById('btn-restart').classList.add('hidden');
             
@@ -747,15 +748,18 @@
             nameBox.classList.remove('hidden');
             nameBox.classList.add('flex');
             
-            // Progress teljes
             document.getElementById('progress-fill').style.width = `100%`;
         }
 
         // -- GEMINI AI FUNKCIÓK --
         async function callGemini(prompt, systemInstruction = "") {
+            if (!apiKey || apiKey.trim() === "") {
+                throw new Error("Missing API Key");
+            }
+
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             let retries = 0;
-            const maxRetries = 3;
+            const maxRetries = 2;
 
             while (retries <= maxRetries) {
                 try {
@@ -771,9 +775,10 @@
                     const data = await response.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
                 } catch (e) {
+                    if (e.message === "Missing API Key") throw e;
                     retries++;
-                    if (retries > maxRetries) return "Sajnos az AI jelenleg nem elérhető. / AI is currently unavailable.";
-                    await new Promise(r => setTimeout(r, Math.pow(2, retries) * 1000));
+                    if (retries > maxRetries) return "Sajnos az AI szerver jelenleg túlterhelt. Kérlek próbáld újra később. / AI server is currently busy.";
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
         }
@@ -794,10 +799,14 @@
             const prompt = `Írj egy rövid, motiváló, misztikus és modern (Web3/Önismeret témájú) napi üzenetet ${langMap[currentLang]}. Max 2 mondat.`;
             const sys = "Te egy bölcs, modern spirituális tanácsadó vagy.";
             
-            const result = await callGemini(prompt, sys);
+            try {
+                const result = await callGemini(prompt, sys);
+                fortuneText.innerText = `"${result.trim()}"`;
+            } catch (error) {
+                fortuneText.innerText = t('alertNoApi');
+            }
             
             loader.classList.add('hidden');
-            fortuneText.innerText = `"${result.trim()}"`;
             btn.disabled = false;
             btn.classList.remove('opacity-50');
         }
@@ -815,20 +824,28 @@
             btn.querySelector('span').innerText = t('aiGeneratingText');
 
             const qs = questionsDb[currentLang][currentQuizId];
-            let userData = userAnswers.map((ans, i) => `Q: ${qs[i]}\nA: ${ans || 'Skipped'}`).join("\n---\n");
+            let userData = userAnswers.map((ans, i) => `Q: ${qs[i].q}\nA: ${ans || 'Skipped/Nincs válasz'}`).join("\n---\n");
             
             const langMap = { hu: "magyarul", en: "in English", tl: "sa Tagalog" };
-            const prompt = `Elemezd az alábbi válaszokat és készíts egy rövid (max 150 szó), mélyreható személyiségprofilt ${langMap[currentLang]}. Adj egy "Lélek-szín" javaslatot is a végén.
-            Neme: ${currentGender}
-            Adatok:\n${userData}`;
+            const prompt = `Elemezd az alábbi válaszokat és készíts egy rövid, barátságos, maximum 150 szavas átfogó személyiségprofilt ${langMap[currentLang]}.
+            A tesztelő neme: ${currentGender}
+            A válaszok:\n${userData}`;
 
-            const result = await callGemini(prompt, "Te egy profi pszichológus vagy.");
+            try {
+                const result = await callGemini(prompt, "Te egy profi, empatikus pszichológus és coach vagy.");
+                lastAiAnalysis = result;
+                textEl.innerText = result;
+            } catch (error) {
+                textEl.innerText = t('alertNoApi');
+                textEl.classList.add('text-red-400');
+            }
             
-            lastAiAnalysis = result;
-            textEl.innerText = result;
             loader.classList.add('hidden');
             btn.querySelector('span').innerText = t('updatingAI');
-            btn.disabled = false;
+            setTimeout(() => {
+                btn.querySelector('span').innerText = t('generateAI');
+                btn.disabled = false;
+            }, 2000);
         }
 
         // -- MEGOSZTÁS ÉS TELEGRAM --
@@ -850,13 +867,12 @@
             }
 
             const qs = questionsDb[currentLang][currentQuizId];
-            qs.forEach((q, i) => {
-                report += `Q${i+1}: ${q}\nA: ${userAnswers[i] || '-'}\n\n`;
+            qs.forEach((qData, i) => {
+                report += `Q: ${qData.q}\nA: ${userAnswers[i] || '-'}\n\n`;
             });
 
             copyToClipboard(report);
             
-            // Custom Message UI
             const btnSend = document.getElementById('btn-send-telegram');
             const originalText = btnSend.innerHTML;
             btnSend.innerHTML = `<span>${t('copiedResult')}</span>`;
@@ -864,7 +880,6 @@
             
             setTimeout(() => {
                 const tgPrompt = encodeURIComponent(t('tgMessagePrompt'));
-                // Ide írd be a te Telegramod azonosítóját (@ nélkül)
                 const tgUrl = `https://t.me/VeresBarnabas1?text=${tgPrompt}`;
                 window.open(tgUrl, '_blank');
                 
@@ -900,7 +915,7 @@
         // -- WEB3: TETRALUX MODAL --
         const modalTetraLux = document.getElementById('modal-tetralux');
         const modalContent = document.getElementById('modal-tetralux-content');
-        const RATE = 1000000; // 0.01 BNB = 10000 TLX -> 1 BNB = 1,000,000 TLX
+        const RATE = 1000000;
 
         function openTetraLuxModal() {
             modalTetraLux.classList.remove('pointer-events-none', 'opacity-0');
@@ -957,7 +972,6 @@
                 statusText.innerText = t('txWait');
                 statusText.className = "text-center text-xs mt-2 h-4 text-blue-400";
 
-                // Simulált hálózati késleltetés
                 await new Promise(resolve => setTimeout(resolve, 2500));
 
                 statusText.innerText = t('txSuccess');
