@@ -23,9 +23,3 @@ Válasz:
 
 +1. Mi az a tárgy az otthonodban, amit egy tűzvész esetén (a szeretteiden és háziállataidon kívül) legelőször kimentenél?
 Válasz:
-
-============================================================
-ELEMZÉSI SABLON (Az AI / értékelő számára)
-• Életmódprofil: A válaszok alapján határozd meg a kitöltő "esztétikáját" (pl. természetkedvelő kalandor, otthonülő nosztalgiázó, pörgős modern minimalista).
-• Érzéki fókusz: Milyen típusú élmények (ízek, látvány, hangok, utazás) adják számára a legnagyobb boldogságot.
-• A +1 kérdés rávilágít arra, hogy mi képviseli számára a legnagyobb érzelmi vagy gyakorlati értéket a mindennapokban.
